@@ -35,6 +35,8 @@ def is_prime(num):
 def find_sum():
     total_sum = 0
     end_index = 101
-    for x in range(end_index):
-        total_sum+=x
+    index = 1
+    while index < end_index:
+        total_sum+=index
+        index+=1
     return total_sum
