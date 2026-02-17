@@ -8,6 +8,8 @@ def check_sign(num):
         return "zero"
     elif num < 0:
         return "negative"
+    else:
+        return "not a number"
   
 
 #Function to get out the first 10 prime numbers
