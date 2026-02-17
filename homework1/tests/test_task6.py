@@ -10,12 +10,5 @@ from src import task6
 def test_count_file_contents():
     #Getting the output from the function in task6
     num_of_words_in_file = task6.count_file_contents()
-
-    #Independaently getting the number of words from the file
-    file_name = "/home/student/CS4300-Assignments/homework1/src/task6_read_me.txt"
-    with open(file_name, 'r') as file:
-        file_content = file.read()
-    split_file_content = file_content.split(" ")
-    
-    #Checking and making sure that the two outputs are the same
-    assert num_of_words_in_file == len(split_file_content)
+    #Checking and making sure that the two outputs are the same as the known number of words in the file
+    assert num_of_words_in_file == 162
