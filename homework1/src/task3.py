@@ -23,7 +23,7 @@ def get_prime_numbers():
         else:
             index +=1
     return list_of_prime_numbers
-#Helper function for get_prime_numbers()      
+#Helper function for get_prime_numbers() ,determineing if a number is prime or not      
 def is_prime(num):
     if num <= 1:
         return False
