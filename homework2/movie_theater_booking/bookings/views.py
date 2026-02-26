@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Movie, Seat, Booking
 from .serializers import MovieSerializer, SeatSerializer, BookingSerializer
+from django.template import loader
+from django.http import HttpResponse
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -94,3 +96,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         bookings = Booking.objects.all()
         serializer = self.get_serializer(bookings, many=True)
         return Response(serializer.data)
+
+def home(request):
+    template = loader.get_template('base.html')
+    return HttpResponse(template.render())

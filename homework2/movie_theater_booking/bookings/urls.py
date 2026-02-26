@@ -9,6 +9,7 @@ router.register(r'seats', views.SeatViewSet)
 router.register(r'bookings', views.BookingViewSet)
 
 urlpatterns = [
+    path('', views.home, name='home'),
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls'))
 ]
