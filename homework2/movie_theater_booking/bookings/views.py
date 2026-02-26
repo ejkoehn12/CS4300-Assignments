@@ -5,6 +5,8 @@ from .models import Movie, Seat, Booking
 from .serializers import MovieSerializer, SeatSerializer, BookingSerializer
 from django.template import loader
 from django.http import HttpResponse
+from django.utils import timezone
+from django.shortcuts import render
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -39,14 +41,14 @@ class SeatViewSet(viewsets.ModelViewSet):
     serializer_class = SeatSerializer
 
     @action(detail=False, methods=['get'])
-    def available(self, request):
+    def get_available_seats(self, request):
         """Get all available (unbooked) seats"""
         available_seats = Seat.objects.filter(seat_booking_status=False)
         serializer = self.get_serializer(available_seats, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
-    def booked(self, request):
+    def get_booked_seats(self, request):
         """Get all booked seats"""
         booked_seats = Seat.objects.filter(seat_booking_status=True)
         serializer = self.get_serializer(booked_seats, many=True)
@@ -97,6 +99,47 @@ class BookingViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(bookings, many=True)
         return Response(serializer.data)
 
-def home(request):
-    template = loader.get_template('base.html')
-    return HttpResponse(template.render())
+def render_home_page(request):
+    """Render the home page with current movies list"""
+    movies = Movie.objects.all()
+    context = {
+        "year": timezone.now().year,
+        "movies": movies,
+    }
+    return render(request, 'homepage.html', context)
+def render_movies_page(request):
+    """Render the movies page with current movies list"""
+    movies = Movie.objects.all()
+    context = {
+        "movies": movies,
+    }
+    return render(request, 'movie_list.html', context)
+def render_booking_history(request):
+    """Render the booking history page with all bookings"""
+    bookings = Booking.objects.all()
+    context = {
+        "bookings": bookings,
+    }
+    return render(request, 'booking_history.html', context)
+def add_movie(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        release_date = request.POST.get('release_date')
+        duration = request.POST.get('duration')
+        movie = Movie.objects.create(
+            title=title,
+            description=description,
+            release_date=release_date,
+            duration=duration
+        )
+        return HttpResponse(f'Movie "{movie.title}" added successfully')
+def remove_movie(request):
+    if request.method == 'POST':
+        movie_id = request.POST.get('id')
+        try:
+            movie = Movie.objects.get(id=movie_id)
+            movie.delete()
+            return HttpResponse(f'Movie "{movie.title}" removed successfully')
+        except Movie.DoesNotExist:
+            return HttpResponse('Movie not found', status=404)
