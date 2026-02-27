@@ -1,4 +1,16 @@
-{%extends 'base.html' %}
-<html>
+{% extends 'base.html' %}
 
-      </html>
+{% block content %}
+<h1>Available Movies</h1>
+<ul class="list-group">
+    {% for movie in movies %}
+    <li class="list-group-item">
+        <h5>{{ movie.title }}</h5>
+        <p>Name: {{ movie.movie_title }}</p>
+        <a href="{% url 'booking_page' movie.id %}" class="btn btn-primary">Book Now</a>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No movies available at the moment.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

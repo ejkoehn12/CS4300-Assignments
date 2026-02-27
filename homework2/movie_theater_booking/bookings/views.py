@@ -114,13 +114,23 @@ def render_movies_page(request):
         "movies": movies,
     }
     return render(request, 'movie_list.html', context)
-def render_booking_history(request):
+def render_booking_history_page(request):
     """Render the booking history page with all bookings"""
     bookings = Booking.objects.all()
     context = {
         "bookings": bookings,
     }
     return render(request, 'booking_history.html', context)
+def render_booking_page(request, movie_id):
+    movie = Movie.objects.get(id=movie_id)
+    available_seats = SeatViewSet().get_available_seats(request).data
+    taken_seats = SeatViewSet().get_booked_seats(request).data
+    context = {
+        "movie": movie,
+        "available_seats": available_seats,
+        "taken_seats": taken_seats,
+    }
+    return render(request, 'seat_booking.html', context)
 def add_movie(request):
     if request.method == 'POST':
         title = request.POST.get('title')

@@ -10,10 +10,11 @@ router.register(r'bookings', views.BookingViewSet)
 
 urlpatterns = [
     path('', views.render_home_page, name='home'),
-    path('/movies/', views.render_movies_page, name='movie_list'),
-    path('/bookings/', views.render_booking_history, name='booking_history'),
+    path('movies/', views.render_movies_page, name='movie_list'),
+    path('booking-history/', views.render_booking_history_page, name='booking_history'),
+    path('booking/', views.render_booking_page, name='booking_page'),
+    path('booking/<int:movie_id>/', views.render_booking_page, name='booking_page'),
+
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls')),
-    path("add-movie/", views.add_movie, name="add_movie"),
-    path("remove-movie/", views.remove_movie, name="remove_movie"),
 ]
