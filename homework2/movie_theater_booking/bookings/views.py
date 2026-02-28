@@ -131,6 +131,12 @@ def render_booking_page(request, movie_id):
         "taken_seats": taken_seats,
     }
     return render(request, 'seat_booking.html', context)
+def render_login_page(request):
+    return render(request, 'registration/login.html')
+def render_signup_page(request):
+    return render(request, 'registration/signup.html')
+
+
 def add_movie(request):
     if request.method == 'POST':
         title = request.POST.get('title')
