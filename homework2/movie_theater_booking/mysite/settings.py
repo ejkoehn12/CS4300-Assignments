@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'bookings',
     'bootstrap5',
+    'behave_django',
 ]
 
 MIDDLEWARE = [
