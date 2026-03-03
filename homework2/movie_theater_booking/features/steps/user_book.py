@@ -26,7 +26,7 @@ def step_movies_available(context):
 def step_user_clicks_book(context):
       movie = Movie.objects.first() 
       context.movie = movie
-      book_url = reverse('booking_page', args=[movie.id])  # Adjust 'book_movie' to match your URL name
+      book_url = reverse('booking_page', args=[movie.id])
       context.response = context.client.get(book_url)
       assert context.response.status_code == 200, f"Book page returned {context.response.status_code}"
 @then('the user should be able to select a seat')
