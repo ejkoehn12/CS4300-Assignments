@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-mqie!)6g0=+#o201#^1d+uv(2+@g6h4($+x0d!9rr-x4g-)xx&
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'cs-4300-assignments.onreader.com',
+    'cs-4300-assignments.onreander.com',
 ]
 
 
