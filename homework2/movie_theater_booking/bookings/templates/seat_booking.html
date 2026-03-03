@@ -1,4 +1,103 @@
-{%extends 'base.html' %}
-<html>
+{% extends 'base.html' %}
+{% block content %}
+<div class="seat-selection">
+    <h2>{{ movie.movie_title }} - Select Your Seats</h2>
 
-      </html>
+
+    
+
+    <p>Available seats: <span class="available-count">{{ available_seats_count }}</span></p>
+
+    <div class="seats-grid">
+        {% for seat in seats %}
+            <button
+                type="button"
+                class="seat {% if seat.seat_booking_status %}reserved{% else %}available{% endif %}"
+                data-seat-id="{{ seat.id }}"
+                {% if seat.seat_booking_status %}disabled{% endif %}
+                onclick="toggleSeat(this)"
+            >
+                {{ seat.seat_number }}
+            </button>
+        {% endfor %}
+    </div>
+
+    <div class="seat-legend">
+        <span><span class="seat available"></span> Available</span>
+        <span><span class="seat reserved"></span> Reserved</span>
+        <span><span class="seat selected"></span> Selected</span>
+    </div>
+
+    <form method="POST" action="{% url 'booking_page' movie.id %}">
+        {% csrf_token %}
+        <div class="booking-date">
+        <label for="booking-date">Select Booking Date:</label>
+        <input type="datetime-local" id="booking-date" name="booking_date" value="{{ now|date:'Y-m-d\\TH:i' }}" required>
+        </div>
+        <input type="hidden" id="selected-seats" name="selected_seats" value="">
+        <button type="submit" class="btn-book">Book Selected Seats</button>
+    </form>
+</div>
+
+<style>
+    .seats-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 8px;
+        margin: 20px 0;
+    }
+
+    .seat {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.1s;
+    }
+
+    .seat.available {
+        background-color: #4caf50; /* green */
+        color: white;
+    }
+
+    .seat.available:hover {
+        transform: scale(1.1);
+    }
+
+    .seat.reserved {
+        background-color: #f44336; /* red */
+        color: white;
+        cursor: not-allowed;
+    }
+
+    .seat.selected {
+        background-color: #2196f3; /* blue */
+        color: white;
+    }
+
+    .booking-date {
+        margin-bottom: 15px;
+    }
+</style>
+
+<script>
+    function toggleSeat(btn) {
+        if (btn.classList.contains('reserved')) return; // cannot select reserved seats
+
+        btn.classList.toggle('selected');
+        updateSelectedSeats();
+    }
+
+    function updateSelectedSeats() {
+        const selectedBtns = document.querySelectorAll('.seat.selected');
+        const seatIds = Array.from(selectedBtns).map(b => b.dataset.seatId).join(',');
+        document.getElementById('selected-seats').value = seatIds;
+
+        // Optional: update available count dynamically
+        const totalAvailable = document.querySelectorAll('.seat.available').length;
+        const selectedCount = selectedBtns.length;
+        document.querySelector('.available-count').innerText = totalAvailable - selectedCount;
+    }
+</script>
+{% endblock %}

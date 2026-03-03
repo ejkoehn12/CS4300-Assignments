@@ -7,6 +7,11 @@ from django.template import loader
 from django.http import HttpResponse
 from django.utils import timezone
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.utils.dateparse import parse_datetime
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -22,6 +27,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     """
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    permission_classes = []
 
 
 class SeatViewSet(viewsets.ModelViewSet):
@@ -39,6 +45,7 @@ class SeatViewSet(viewsets.ModelViewSet):
     """
     queryset = Seat.objects.all()
     serializer_class = SeatSerializer
+    permission_classes = []
 
     @action(detail=False, methods=['get'])
     def get_available_seats(self, request):
@@ -69,6 +76,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     """
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+    permission_classes = []
 
     def create(self, request, *args, **kwargs):
         """
@@ -114,27 +122,28 @@ def render_movies_page(request):
         "movies": movies,
     }
     return render(request, 'movie_list.html', context)
+@login_required
 def render_booking_history_page(request):
-    """Render the booking history page with all bookings"""
-    bookings = Booking.objects.all()
+    bookings = Booking.objects.filter(user=request.user).select_related('booked_movie', 'booked_seat').order_by('-booked_date')
     context = {
         "bookings": bookings,
     }
     return render(request, 'booking_history.html', context)
-def render_booking_page(request, movie_id):
-    movie = Movie.objects.get(id=movie_id)
-    available_seats = SeatViewSet().get_available_seats(request).data
-    taken_seats = SeatViewSet().get_booked_seats(request).data
-    context = {
-        "movie": movie,
-        "available_seats": available_seats,
-        "taken_seats": taken_seats,
-    }
-    return render(request, 'seat_booking.html', context)
+
 def render_login_page(request):
     return render(request, 'registration/login.html')
 def render_signup_page(request):
     return render(request, 'registration/signup.html')
+def render_seat_booking_page(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    seats = Seat.objects.filter(movie=movie).order_by('id')
+    
+    context = {
+        "movie": movie,
+        "seats": seats,
+        "available_seats_count": seats.filter(seat_booking_status=False).count(),
+    }
+    return render(request, 'seat_booking.html', context)
 
 
 def add_movie(request):
@@ -159,3 +168,48 @@ def remove_movie(request):
             return HttpResponse(f'Movie "{movie.title}" removed successfully')
         except Movie.DoesNotExist:
             return HttpResponse('Movie not found', status=404)
+
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+
+def book_seats(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    seats = Seat.objects.filter(movie=movie).order_by('id')
+
+    if request.method == 'POST':
+        # Get selected seats
+        seat_ids = request.POST.get("selected_seats", "")
+        seat_ids = [int(s) for s in seat_ids.split(",") if s]
+
+        # Get the booking date from the form
+        booked_date_str = request.POST.get("booking_date", "")
+        booked_date = parse_datetime(booked_date_str)
+
+        # If the form somehow fails to provide a valid date, stop and show an error
+        if not booked_date:
+            return HttpResponse("Error: Booking date is required and must be valid.", status=400)
+
+        for seat_id in seat_ids:
+            seat = Seat.objects.get(id=seat_id, movie=movie)
+            if not seat.seat_booking_status:
+                seat.seat_booking_status = True
+                seat.save()
+                Booking.objects.create(
+                    booked_movie=movie,
+                    booked_seat=seat,
+                    booked_date=booked_date,
+                    user=request.user
+                )
+
+        return redirect('seat_booking', movie_id=movie_id)
+
+    context = {
+        "movie": movie,
+        "seats": seats,
+        "available_seats_count": seats.filter(seat_booking_status=False).count(),
+        "now": timezone.now(),  # used as default in template
+    }
+    return render(request, 'seat_booking.html', context)
+    
+
+

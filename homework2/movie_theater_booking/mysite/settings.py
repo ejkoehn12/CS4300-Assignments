@@ -120,3 +120,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',  # works with Django login
+        'rest_framework.authentication.BasicAuthentication',    # optional for testing
+        # 'rest_framework.authentication.TokenAuthentication',  # if using token auth
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',  # require login by default
+    ],
+}
