@@ -125,7 +125,7 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
 if not DEBUG:
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
