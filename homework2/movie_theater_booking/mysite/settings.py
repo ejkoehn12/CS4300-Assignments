@@ -123,6 +123,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
+import os
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 if not DEBUG:
