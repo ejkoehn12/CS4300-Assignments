@@ -84,7 +84,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+        movie_id = serializer.validated_data['booked_movie'].id
         # Mark seat as booked when booking is created
         seat = serializer.validated_data['booked_seat']
         if seat.seat_booking_status:
@@ -92,7 +92,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                 {"error": "Seat is already booked"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+        if seat.movie_id != movie_id:
+            return Response(
+                {"error": "Seat does not belong to the specified movie"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         seat.seat_booking_status = True
         seat.save()
         
