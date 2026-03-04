@@ -6,82 +6,45 @@ from .serializers import MovieSerializer, SeatSerializer, BookingSerializer
 from django.template import loader
 from django.http import HttpResponse
 from django.utils import timezone
-from django.shortcuts import render
-from django.shortcuts import get_object_or_404, redirect
+from django.utils.dateparse import parse_datetime
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.utils.dateparse import parse_datetime
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for CRUD operations on movies.
-    
-    Provides endpoints:
-    - GET /api/movies/ - List all movies
-    - POST /api/movies/ - Create a new movie
-    - GET /api/movies/{id}/ - Retrieve a specific movie
-    - PUT /api/movies/{id}/ - Update a movie
-    - DELETE /api/movies/{id}/ - Delete a movie
-    """
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
     permission_classes = []
 
 
 class SeatViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for seat management with availability and booking information.
-    
-    Provides endpoints:
-    - GET /api/seats/ - List all seats
-    - POST /api/seats/ - Create a new seat
-    - GET /api/seats/{id}/ - Retrieve a specific seat
-    - PUT /api/seats/{id}/ - Update a seat
-    - DELETE /api/seats/{id}/ - Delete a seat
-    - GET /api/seats/available/ - Get all available seats
-    - GET /api/seats/booked/ - Get all booked seats
-    """
     queryset = Seat.objects.all()
     serializer_class = SeatSerializer
     permission_classes = []
 
     @action(detail=False, methods=['get'])
+    #Function to get all available seats for a movie
     def get_available_seats(self, request):
-        """Get all available (unbooked) seats"""
         available_seats = Seat.objects.filter(seat_booking_status=False)
         serializer = self.get_serializer(available_seats, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
+    #Function to get all booked seats for a movie
     def get_booked_seats(self, request):
-        """Get all booked seats"""
         booked_seats = Seat.objects.filter(seat_booking_status=True)
         serializer = self.get_serializer(booked_seats, many=True)
         return Response(serializer.data)
 
 
 class BookingViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for users to book seats and view their booking history.
-    
-    Provides endpoints:
-    - GET /api/bookings/ - List all bookings
-    - POST /api/bookings/ - Create a new booking
-    - GET /api/bookings/{id}/ - Retrieve a specific booking
-    - PUT /api/bookings/{id}/ - Update a booking
-    - DELETE /api/bookings/{id}/ - Delete a booking
-    - GET /api/bookings/history/ - Get booking history
-    """
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
     permission_classes = []
-
+    #Function to create a new booking and mark the seat as booked
     def create(self, request, *args, **kwargs):
-        """
-        Create a new booking and automatically mark the seat as booked.
-        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         movie_id = serializer.validated_data['booked_movie'].id
@@ -105,12 +68,13 @@ class BookingViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=['get'])
+    #Function to return booking history
     def history(self, request):
-        """Get booking history for all bookings"""
         bookings = Booking.objects.all()
         serializer = self.get_serializer(bookings, many=True)
         return Response(serializer.data)
 
+#Helper function to render homepage with required information
 def render_home_page(request):
     """Render the home page with current movies list"""
     movies = Movie.objects.all()
@@ -119,6 +83,7 @@ def render_home_page(request):
         "movies": movies,
     }
     return render(request, 'homepage.html', context)
+#Helper Function to render movies page
 def render_movies_page(request):
     """Render the movies page with current movies list"""
     movies = Movie.objects.all()
@@ -127,6 +92,7 @@ def render_movies_page(request):
     }
     return render(request, 'movie_list.html', context)
 @login_required
+#Helper function to render booking history page for a logged in user
 def render_booking_history_page(request):
     bookings = Booking.objects.filter(user=request.user).select_related('booked_movie', 'booked_seat').order_by('-booked_date')
     context = {
@@ -134,10 +100,13 @@ def render_booking_history_page(request):
     }
     return render(request, 'booking_history.html', context)
 
+#Helper function to render login page
 def render_login_page(request):
     return render(request, 'registration/login.html')
+#Helper function to render signup page
 def render_signup_page(request):
     return render(request, 'registration/signup.html')
+#Helper function to render seat booking page for a specific movie
 def render_seat_booking_page(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
     seats = Seat.objects.filter(movie=movie).order_by('id')
@@ -149,7 +118,7 @@ def render_seat_booking_page(request, movie_id):
     }
     return render(request, 'seat_booking.html', context)
 
-
+#Function to add a new movie to the database
 def add_movie(request):
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -163,6 +132,7 @@ def add_movie(request):
             duration=duration
         )
         return HttpResponse(f'Movie "{movie.title}" added successfully')
+#Function to remove a movie from the database using movie.id
 def remove_movie(request):
     if request.method == 'POST':
         movie_id = request.POST.get('id')
@@ -175,7 +145,7 @@ def remove_movie(request):
 
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
-
+#Function to help with booking one or multiple seats
 def book_seats(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
     seats = Seat.objects.filter(movie=movie).order_by('id')
@@ -192,7 +162,7 @@ def book_seats(request, movie_id):
         # If the form somehow fails to provide a valid date, stop and show an error
         if not booked_date:
             return HttpResponse("Error: Booking date is required and must be valid.", status=400)
-
+        #Looping through all selected seats and setting them as booked 
         for seat_id in seat_ids:
             seat = Seat.objects.get(id=seat_id, movie=movie)
             if not seat.seat_booking_status:
@@ -211,7 +181,7 @@ def book_seats(request, movie_id):
         "movie": movie,
         "seats": seats,
         "available_seats_count": seats.filter(seat_booking_status=False).count(),
-        "now": timezone.now(),  # used as default in template
+        "now": timezone.now(),
     }
     return render(request, 'seat_booking.html', context)
     
