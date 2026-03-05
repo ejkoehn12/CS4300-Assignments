@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'cs4300-assignments.onrender.com',
+    'localhost',
 ]
 
 
