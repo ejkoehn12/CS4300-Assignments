@@ -107,6 +107,7 @@ def render_login_page(request):
 def render_signup_page(request):
     return render(request, 'registration/signup.html')
 #Helper function to render seat booking page for a specific movie
+@login_required
 def render_seat_booking_page(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
     seats = Seat.objects.filter(movie=movie).order_by('id')
